@@ -103,7 +103,7 @@ size_t File::Read(void* buf, size_t len)
   return len - remaining;
 }
 
-bool File::ReadLine(std::string& line, const bool need_newline)
+int File::ReadLine(std::string& line, const bool need_newline)
 {
   char buf[4096];
   char* ret = NULL;
@@ -121,10 +121,10 @@ bool File::ReadLine(std::string& line, const bool need_newline)
         }
       }
       else if (::feof(fp_)) {
-        return true;
+        return E_EOF;
       }
 
-      return false;
+      return E_ERROR;
     }
 
     assert(ret == buf);
@@ -148,5 +148,5 @@ bool File::ReadLine(std::string& line, const bool need_newline)
 
   } while (n == (sizeof(buf) - 1));
 
-  return true;
+  return 0;
 }

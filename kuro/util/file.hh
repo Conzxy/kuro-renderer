@@ -24,6 +24,11 @@ struct FileException : std::runtime_error {
 
 class File : kanon::noncopyable {
  public:
+  enum Errno {
+    E_EOF = 1,
+    E_ERROR,
+  };
+
   enum OpenMode : uint8_t {
     READ = 0x1,
     WRITE = 0x2,
@@ -49,7 +54,7 @@ class File : kanon::noncopyable {
 
   size_t Read(void* buf, size_t len);
 
-  bool ReadLine(std::string& line, const bool need_newline = true);
+  int ReadLine(std::string& line, const bool need_newline = true);
 
   void Write(void const* buf, size_t len) noexcept { ::fwrite(buf, 1, len, fp_); }
 
