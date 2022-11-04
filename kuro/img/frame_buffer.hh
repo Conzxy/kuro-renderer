@@ -45,7 +45,7 @@ class FrameBuffer {
     , height_(h)
     , bpp_(ImageType2BytesPerPixel(t))
     , type_(t)
-    , data_(w * h * GetBytesPerPixel(), 0) 
+    , data_((w+1) * (h+1) * GetBytesPerPixel(), 0) 
   {
   }
 
@@ -55,7 +55,7 @@ class FrameBuffer {
 
   void SetPixel(int x, int y, FrameColor const &c) noexcept;
   FrameColor GetPixel(int x, int y) noexcept;
-
+  
   void ClearAllPixel() noexcept;
 
   int GetBytesPerPixel() const noexcept

@@ -29,16 +29,16 @@ int FrameBuffer::ImageType2BytesPerPixel(ImageType t) noexcept
 
 void FrameBuffer::SetPixel(int x, int y, FrameColor const &c) noexcept
 {
-  assert(x > 0 && x < width_ &&
-         y > 0 && y < height_);
+  assert(x >= 0 && x <= width_ &&
+         y >= 0 && y <= height_);
   const auto bpp = GetBytesPerPixel();
   memcpy(&data_[(x+y*width_)*bpp], &c, bpp);
 }
 
 FrameColor FrameBuffer::GetPixel(int x, int y) noexcept
 {
-  assert(x > 0 && x < width_ &&
-         y > 0 && y < height_);
+  assert(x >= 0 && x <= width_ &&
+         y >= 0 && y <= height_);
   const auto bpp = GetBytesPerPixel();
   FrameColor color;
   memcpy(&color, &data_[(x+y*width_)*bpp], bpp);

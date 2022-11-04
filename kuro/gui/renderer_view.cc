@@ -11,6 +11,8 @@ RendererView::RendererView()
 {
   scene_->addItem(px_item_);
   scene_->setBackgroundBrush(Qt::black);
+  // flip vertically
+  scale(1, -1);
   setScene(scene_);
 }
 

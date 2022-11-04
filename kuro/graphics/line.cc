@@ -159,6 +159,12 @@ void DrawLine(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_bu
   // slope > 1
   bool steep = false;
 
+  if (p1.x == p0.x) {
+    for (auto y = p0.y; y <= p1.y; ++y)
+      frame_buffer.SetPixel(p0.x, y, c);
+    return;
+  }
+
   // Make slope less than 1
   if (std::abs(p1.x - p0.x) < std::abs(p1.y - p0.y)) {
     std::swap(p0.x, p0.y);
@@ -181,7 +187,7 @@ void DrawLine(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_bu
   int y = p0.y;
 
   assert(p0.x < p1.x && "The first point must be left");
-  for (int x = p0.x; x < p1.x; ++x) {
+  for (int x = p0.x; x <= p1.x; ++x) {
     if (steep)
       frame_buffer.SetPixel(y, x, c);
     else
