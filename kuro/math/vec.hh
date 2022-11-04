@@ -10,6 +10,9 @@
 namespace kuro {
 
 #define VEC_COMMON_DEFINITION(d)                                               \
+  Vec() noexcept = default;                                                    \
+  ~Vec() noexcept = default;                                                   \
+                                                                               \
   size_t GetDimension() const noexcept { return d; }                           \
                                                                                \
   Vec(std::array<T, d> const &data)                                            \
@@ -23,7 +26,7 @@ namespace kuro {
                                                                                \
   T const &operator[](size_t i) const noexcept { return data_[i]; }            \
                                                                                \
-  T len() const noexcept                                                       \
+  float len() const noexcept                                                   \
   {                                                                            \
     T sum{};                                                                   \
     for (size_t i = 0; i < d; ++i) {                                           \
@@ -33,24 +36,24 @@ namespace kuro {
     return std::sqrt(sum);                                                     \
   }                                                                            \
                                                                                \
-  Vec<T, d> Normalize() const noexcept                                         \
+  Vec<float, d> Normalize() const noexcept                                     \
   {                                                                            \
-    std::array<T, d> intermediate = data_;                                     \
+    std::array<float, d> intermediate;                                         \
+    for (size_t i = 0; i < d; ++i)                                             \
+      intermediate[i] = data_[i];                                              \
     auto const l = len();                                                      \
     for (auto &e : intermediate) {                                             \
       e /= l;                                                                  \
     }                                                                          \
                                                                                \
-    return Vec<T, d>(intermediate);                                            \
+    return Vec<float, d>(intermediate);                                        \
   }
 
 template <typename T, size_t N>
 class Vec {
   static_assert(N > 0, "Demension must greater than 0");
- public:
-  Vec() noexcept = default;
-  ~Vec() noexcept = default;
 
+ public:
   VEC_COMMON_DEFINITION(N)
  private:
   std::array<T, N> data_;
@@ -138,6 +141,15 @@ Vec<T, 3> CrossProduct3(Vec<T, 3> const &a, Vec<T, 3> const &b) noexcept
 }
 
 template <typename T, size_t N>
+Vec<float, N> ToVecf(Vec<T, N> const &a) noexcept
+{
+  Vec<float, N> ret;
+  for (size_t i = 0; i < N; ++i)
+    ret[i] = a[i];
+  return ret;
+}
+
+template <typename T, size_t N>
 T DotProduct(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
 {
   T ret{};
@@ -151,6 +163,28 @@ template <typename T, size_t N>
 bool IsOrthogonal(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
 {
   return DotProduct(a, b) == 0;
+}
+
+template <typename T, size_t N>
+Vec<T, N> operator-(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
+{
+  std::array<T, N> data;
+  for (size_t i = 0; i < N; ++i) {
+    data[i] = a[i] - b[i];
+  }
+
+  return Vec<T, N>(data);
+}
+
+template <typename T, size_t N>
+Vec<T, N> operator+(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
+{
+  std::array<T, N> data;
+  for (size_t i = 0; i < N; ++i) {
+    data[i] = a[i] + b[i];
+  }
+
+  return Vec<T, N>(data);
 }
 
 } // namespace kuro
