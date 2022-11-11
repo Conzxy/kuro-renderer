@@ -73,7 +73,7 @@ BinPackParameters: true
 AlwaysBreakTemplateDeclarations: Yes
 
 # 80个字符一行是比较令人舒适和便于阅读的
-ColumnLimit: 80
+ColumnLimit: 100
 
 # 构造函数初始值列表缩进
 ConstructorInitializerIndentWidth: 2

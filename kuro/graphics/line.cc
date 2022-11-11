@@ -180,7 +180,7 @@ void DrawLine(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_bu
   int delta_x = std::abs(p1.x - p0.x);
   int delta_y = std::abs(p1.y - p0.y);
 
-  float k = float(delta_y) / (delta_x);
+  float k = float(delta_y) / (delta_x);(void)k;
   assert(k >= 0 && k <= 1 && "The absolute slope must be <= 1");
   
   float error = delta_y - delta_x;

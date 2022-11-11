@@ -1,5 +1,6 @@
 QT5_WRAP_CPP(MOC_FILES
   gui/renderer_view.hh
+  gui/main_window.hh
 )
 
 file(GLOB_RECURSE KURO_SRC
@@ -8,6 +9,7 @@ file(GLOB_RECURSE KURO_SRC
   graphics/*.cc
   gui/*.cc
   math/*.cc
+  ${TAKINA_DIR}/takina.cc
 )
 
 list(APPEND KURO_SRC ${MOC_FILES})

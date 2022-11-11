@@ -68,7 +68,7 @@ message(STATUS "BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 set(KURO_SOURCE_DIR ${PROJECT_SOURCE_DIR}/kuro)
 
 # 如果项目依赖于第三方库，可以将以下有关third-party的均解注释
-#set(THIRD_PARTY_DIR ${PROJECT_SOURCE_DIR}/third-party)
+set(THIRD_PARTY_DIR ${PROJECT_SOURCE_DIR}/third-party)
 
 # 可选项，不过默认包含
 # 引用自己的模块，我偏向于
@@ -169,7 +169,9 @@ include_directories(${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
 
 SetLibName(KURO_LIB kuro)
 
+set(TAKINA_DIR ${THIRD_PARTY_DIR}/takina)
+
 add_subdirectory(kuro)
 #add_subdirectory(example)
 add_subdirectory(test)
-#add_subdirectory(third-party
+# add_subdirectory(third-party)
