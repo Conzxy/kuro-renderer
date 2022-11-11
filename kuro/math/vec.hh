@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <stddef.h>
 
 #include "kuro/util/assert.hh"
@@ -47,6 +48,22 @@ namespace kuro {
     }                                                                          \
                                                                                \
     return Vec<float, d>(intermediate);                                        \
+  }                                                                            \
+                                                                               \
+  void Print() const noexcept                                                  \
+  {                                                                            \
+    std::cout << "(";                                                          \
+    for (size_t i = 0; i < d - 1; ++i)                                         \
+      std::cout << data_[i] << ",";                                            \
+    std::cout << data_[d - 1] << ")\n";                                        \
+  }                                                                            \
+                                                                               \
+  Vec &operator+=(Vec const &rhs) noexcept                                     \
+  {                                                                            \
+    for (size_t i = 0; i < d; ++i) {                                           \
+      data_[i] += rhs[i];                                                      \
+    }                                                                          \
+    return *this;                                                              \
   }
 
 template <typename T, size_t N>
@@ -58,6 +75,7 @@ class Vec {
  private:
   std::array<T, N> data_;
 };
+
 
 template <typename T>
 class Vec<T, 2> {
@@ -145,10 +163,19 @@ Vec<float, N> ToVecf(Vec<T, N> const &a) noexcept
 {
   Vec<float, N> ret;
   for (size_t i = 0; i < N; ++i)
-    ret[i] = a[i];
+    ret[i] = (float)a[i];
   return ret;
 }
 
+template <typename T, size_t N>
+Vec<int, N> ToVeci(Vec<T, N> const &v) noexcept
+{
+  Vec<int, N> ret;
+  for (size_t i = 0; i < N; ++i) {
+    ret[i] = (int)v[i];
+  }
+  return ret;
+}
 template <typename T, size_t N>
 T DotProduct(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
 {
@@ -177,6 +204,15 @@ Vec<T, N> operator-(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
 }
 
 template <typename T, size_t N>
+Vec<T, N> operator-(Vec<T, N> const &a) noexcept
+{
+  Vec<T, N> ret;
+  for (size_t i = 0; i < N; ++i)
+    ret[i] = -a[i];
+  return ret;
+}
+
+template <typename T, size_t N>
 Vec<T, N> operator+(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
 {
   std::array<T, N> data;
@@ -185,6 +221,59 @@ Vec<T, N> operator+(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
   }
 
   return Vec<T, N>(data);
+}
+
+template <typename T, size_t N>
+inline Vec<T, N> operator/(Vec<T, N> const &a, T d) noexcept
+{
+  Vec<T, N> ret;
+  for (size_t i = 0; i < N; ++i) {
+    ret[i] = a[i] / d;
+  }
+  return ret;
+}
+
+template <typename T, size_t N>
+inline Vec<T, N> operator*(Vec<T, N> const &a, T m) noexcept
+{
+  Vec<T, N> ret;
+  for (size_t i = 0; i < N; ++i) {
+    ret[i] = a[i] * m;
+  }
+  return ret;
+}
+
+// TODO Use TMP optimization
+template <size_t N, size_t F, typename T>
+Vec<T, N> ClipVec(Vec<T, F> const &v) noexcept
+{
+  static_assert(N < F, "");
+  Vec<T, N> ret;
+  for (size_t i = 0; i < N; ++i) {
+    ret[i] = v[i];
+  }
+  return ret;
+}
+
+template <size_t N, size_t F, typename T>
+Vec<T, N> EmbedVec(Vec<T, F> const &v, T e) noexcept
+{
+  static_assert(N > F, "");
+  Vec<T, N> ret;
+  size_t i = 0;
+  for (i = 0; i < F; ++i) {
+    ret[i] = v[i];
+  }
+  for (; i < N; ++i) {
+    ret[i] = e;
+  }
+  return ret;
+}
+
+template <size_t N, size_t F>
+inline Vec<float, N> EmbedVecf(Vec<float, F> const &v, float e) noexcept
+{
+  return EmbedVec<N, F, float>(v, e);
 }
 
 } // namespace kuro
