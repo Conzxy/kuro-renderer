@@ -4,8 +4,21 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsView>
+#include <QTime>
+#include <QElapsedTimer>
+
+#include "kuro/graphics/camera.hh"
+#include "kuro/img/frame_buffer.hh"
 
 namespace kuro {
+
+class Model;
+class ShaderInterface;
+
+struct FrameContext {
+  float avg_time = 0;
+  float fps = 0;
+};
 
 class RendererView : public QGraphicsView {
   Q_OBJECT
@@ -14,12 +27,44 @@ class RendererView : public QGraphicsView {
   ~RendererView() noexcept override;
   
   void SetImage(QImage const &image);
+  void SetModel(Model &model);
+
+  void StartRender();
+  void StopRender();
+  
+  void ResetCamera() noexcept;
+
+  FrameContext GetFrameContext() const noexcept
+  {
+    return frame_context_;
+  }
 
  protected:
   void keyPressEvent(QKeyEvent *key_ev) override;
+  void paintEvent(QPaintEvent *e) override;
+  void mouseMoveEvent(QMouseEvent *e) override;
+  void mousePressEvent(QMouseEvent *e) override;
+  void mouseReleaseEvent(QMouseEvent *e) override;
+  void wheelEvent(QWheelEvent *e) override;
+
  private:
+  void Render();
+
   QGraphicsScene *scene_;
   QGraphicsPixmapItem *px_item_;
+  
+  QTimer *timer_;
+  QElapsedTimer fps_time_;
+
+  QImage image;
+
+  Model *model_;
+  ShaderInterface *shader;
+  FrameBuffer frame_buffer;
+  
+  float frame_count_ = 0;
+  FrameContext frame_context_;
+  CameraContext camera_ctx_;
 };
 
 } // namespace kuro
