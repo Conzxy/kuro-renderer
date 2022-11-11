@@ -48,7 +48,8 @@ class Model {
   Face &GetFace(size_t i) noexcept { return faces_[i]; }
   Texture &GetTexture(size_t i) noexcept { return textures_[i]; }
   Normal &GetNormal(size_t i) noexcept { return normals_[i]; }
-
+  
+  void Clear();
  private:
   bool ParseMesh(std::string const &mesh_slice, Face &face);
   bool ParseTexture(std::string const &line);

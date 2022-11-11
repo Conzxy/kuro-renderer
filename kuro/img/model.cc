@@ -231,3 +231,11 @@ bool Model::ParseFace(std::string const &line)
   faces_.push_back(std::move(face));
   return true;
 }
+
+void Model::Clear()
+{
+  vertexes_.clear();
+  faces_.clear();
+  textures_.clear();
+  normals_.clear();
+}
