@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <stdint.h>
+#include <assert.h>
+
+#include <limits>
 
 namespace kuro {
 
@@ -38,14 +41,14 @@ class FrameBuffer {
     IMAGE_TYPE_RGB = 3,
     IMAGE_TYPE_RGBA = 4,
   };
-  
 
   FrameBuffer(int w, int h, ImageType t)
     : width_(w)
     , height_(h)
     , bpp_(ImageType2BytesPerPixel(t))
     , type_(t)
-    , data_((w+1) * (h+1) * GetBytesPerPixel(), 0) 
+    , data_(w * h * GetBytesPerPixel(), 0) 
+    , zbuffer_(w * h, -std::numeric_limits<float>::max())
   {
   }
 
@@ -73,7 +76,32 @@ class FrameBuffer {
   uint8_t const *GetRawData() const noexcept { return data_.data(); }
 
   ImageType GetImageType() const noexcept { return type_; }
+  
+  float GetDepth(int x, int y) const noexcept 
+  { 
+    CheckCoordinate(x, y);
+    return zbuffer_[x + y * width_]; 
+  }
+  
+  void UpdateDepth(int x, int y, float d) noexcept
+  {
+    CheckCoordinate(x, y);
+    zbuffer_[x + y * width_] = d;
+  }
+  
+  void ClearDepth() noexcept
+  {
+    for (auto &d : zbuffer_) {
+      d = -std::numeric_limits<float>::max();
+    }
+  }
  private:
+  void CheckCoordinate(int x, int y) const noexcept
+  {
+    assert(x >= 0 && y >= 0 &&
+           x < width_ && y < height_);
+  }
+
   static int ImageType2BytesPerPixel(ImageType t) noexcept;
 
   int width_;
@@ -81,6 +109,7 @@ class FrameBuffer {
   int bpp_; // bytes per pixel
   ImageType type_;
   std::vector<uint8_t> data_;
+  std::vector<float> zbuffer_;
 };
 
 } // namespace kuro
