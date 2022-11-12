@@ -64,6 +64,13 @@ namespace kuro {
       data_[i] += rhs[i];                                                      \
     }                                                                          \
     return *this;                                                              \
+  }                                                                            \
+                                                                               \
+  void MakeZero() noexcept                                                     \
+  {                                                                            \
+    for (size_t i = 0; i < d; ++i) {                                           \
+      data_[i] = 0;                                                            \
+    }                                                                          \
   }
 
 template <typename T, size_t N>
@@ -75,7 +82,6 @@ class Vec {
  private:
   std::array<T, N> data_;
 };
-
 
 template <typename T>
 class Vec<T, 2> {

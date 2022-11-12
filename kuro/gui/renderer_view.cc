@@ -32,6 +32,10 @@ RendererView::RendererView()
   , px_item_(new QGraphicsPixmapItem())
   , shader(new FlatShader())
   , frame_buffer(WIDTH, HEIGHT, FrameBuffer::IMAGE_TYPE_RGB)
+  , init_position_(0., 0., 1.)
+  , init_target_(0., 0., 0.)
+  , camera_(init_target_, init_position_,
+           frame_buffer.GetWidth() / (float)frame_buffer.GetHeight())
 {
   scene_->addItem(px_item_);
   scene_->setBackgroundBrush(Qt::black);
@@ -40,9 +44,7 @@ RendererView::RendererView()
   scale(1, -1);
   setScene(scene_);
 
-  timer_ = new QTimer(this);
-
-  connect(timer_, &QTimer::timeout, this, [this]() {
+  connect(&timer_, &QTimer::timeout, this, [this]() {
     Render();
   });
 }
@@ -64,7 +66,7 @@ void RendererView::SetModel(Model &model)
 
 void RendererView::StartRender()
 {
-  timer_->start(1);
+  timer_.start(1);
   fps_time_.restart();
 
   Render();
@@ -72,7 +74,7 @@ void RendererView::StartRender()
 
 void RendererView::StopRender()
 {
-  timer_->stop();
+  timer_.stop();
   fps_time_.invalidate();
 
   frame_context_.avg_time = 0;
@@ -83,14 +85,20 @@ void RendererView::StopRender()
 void RendererView::mousePressEvent(QMouseEvent *e)
 {
   Vec2i cur_pos = QPointToVec(e->pos());
+  
+  /*
+   * In fact, press the left and right button,
+   * the camera and target relative position hasn't changed
+   */
   auto buttons = e->buttons();
   if (buttons & Qt::LeftButton) {
     camera_ctx_.is_orbiting = true;
-    camera_ctx_.pressd_pos = cur_pos;
+    camera_ctx_.orbit_begin = cur_pos;
     camera_ctx_.orbit_end = cur_pos;
-  } else if (buttons & Qt::RightButton) {
+  }
+  if (buttons & Qt::RightButton) {
     camera_ctx_.is_paning = true;
-    camera_ctx_.pressd_pos = cur_pos;
+    camera_ctx_.pan_begin = cur_pos;
     camera_ctx_.pan_end = cur_pos;
   }
 }
@@ -119,15 +127,6 @@ void RendererView::mouseReleaseEvent(QMouseEvent *e)
   }
 }
 
-void RendererView::keyPressEvent(QKeyEvent *ev)
-{
-  if (ev->key() == Qt::Key_Escape) {
-    this->close();
-  } else {
-    QGraphicsView::keyPressEvent(ev);
-  }
-}
-
 void RendererView::wheelEvent(QWheelEvent *e)
 {
   // backwards to user --> negative
@@ -140,24 +139,16 @@ void RendererView::wheelEvent(QWheelEvent *e)
   e->accept();
 }
 
-#if 1
-void RendererView::paintEvent(QPaintEvent *e)
-{
-  QGraphicsView::paintEvent(e);
-  // QPainter painter(this);
-  // painter.drawImage(0, 0, image);
-}
-#endif
-
 void RendererView::ResetCamera() noexcept
 {
+  camera_.SetPosition(init_position_);
+  camera_.SetTarget(init_target_);
+  camera_.ResetMotion();
   new (&camera_ctx_) CameraContext();
 }
 
 void RendererView::Render()
 {
-  static Camera camera({0., 0., 0.}, {0., 0., 1.},
-                       frame_buffer.GetWidth() / (float)frame_buffer.GetHeight());
 
   frame_buffer.ClearAllPixel();
   frame_buffer.ClearDepth();
@@ -165,9 +156,9 @@ void RendererView::Render()
   camera_ctx_.height = height();
   camera_ctx_.width = width();
 
-  camera.Update(camera_ctx_);
-  shader->varying_projection_matrix = camera.GetProjectionMatrix();
-  shader->varying_view_matrix = camera.GetViewMatrix();
+  camera_.Update(camera_ctx_);
+  shader->varying_projection_matrix = camera_.GetProjectionMatrix();
+  shader->varying_view_matrix = camera_.GetViewMatrix();
 
   shader->varying_viewport_matrix = GetViewportMatrix(frame_buffer.GetWidth(), frame_buffer.GetHeight());
   shader->varying_model_matrix = GetIdentityF<4>();
@@ -178,8 +169,13 @@ void RendererView::Render()
   for (size_t i = 0; i < model_->GetFacesNum(); ++i) {
     auto &face = model_->GetFace(i);
     std::array<FragmentContext, 3> fctxs;
-    for (size_t j = 0; j < face.size(); j += 3) {
+    
+    DebugPrintf("face vertexes count = %zu\n", face.size());
+    if (face.size() < 3) break;
+    const auto last_vtx_idx_after = face.size() - 2;
+    for (size_t j = 0; j < last_vtx_idx_after; j++) {
       for (int k = 0; k < 3; ++k) {
+        DebugPrintf("current vertex in face: %d\n", int(k+j));
         auto &mesh = face[k + j];
         VertexContext vctx{
             .pos = model_->GetVertex(mesh.vertex_idx),

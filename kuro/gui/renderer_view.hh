@@ -5,6 +5,7 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsView>
 #include <QTime>
+#include <QTimer>
 #include <QElapsedTimer>
 
 #include "kuro/graphics/camera.hh"
@@ -40,8 +41,6 @@ class RendererView : public QGraphicsView {
   }
 
  protected:
-  void keyPressEvent(QKeyEvent *key_ev) override;
-  void paintEvent(QPaintEvent *e) override;
   void mouseMoveEvent(QMouseEvent *e) override;
   void mousePressEvent(QMouseEvent *e) override;
   void mouseReleaseEvent(QMouseEvent *e) override;
@@ -53,17 +52,21 @@ class RendererView : public QGraphicsView {
   QGraphicsScene *scene_;
   QGraphicsPixmapItem *px_item_;
   
-  QTimer *timer_;
+  QTimer timer_;
   QElapsedTimer fps_time_;
 
   QImage image;
 
-  Model *model_;
-  ShaderInterface *shader;
+  Model *model_ = nullptr;
+  ShaderInterface *shader = nullptr;
   FrameBuffer frame_buffer;
   
   float frame_count_ = 0;
   FrameContext frame_context_;
+  
+  Vec3f init_position_;
+  Vec3f init_target_;
+  Camera camera_;
   CameraContext camera_ctx_;
 };
 

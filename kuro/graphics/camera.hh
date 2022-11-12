@@ -18,8 +18,8 @@ struct CameraContext {
    * Orbit context
    */
   bool is_orbiting = false;
+  Vec2i orbit_begin = { 0, 0 };
   Vec2i orbit_end = { 0, 0 };
-  Vec2i pressd_pos = { 0, 0 };
   
   /*
    * dolly context
@@ -32,6 +32,7 @@ struct CameraContext {
    * pan context
    */
   bool is_paning = false;
+  Vec2i pan_begin = { 0, 0 };
   Vec2i pan_end = { 0, 0 };
 };
 
@@ -59,6 +60,32 @@ class Camera {
   Camera(Vec3f target, Vec3f position, float aspect_ratio);
   
   void Update(CameraContext &context);
+  
+  void SetPosition(Vec3f position) noexcept
+  {
+    position_ = position;
+  }
+
+  void SetTarget(Vec3f target) noexcept
+  {
+    target_ = target;
+  }
+  
+  void SetAspectRatio(float ar) noexcept
+  {
+    aspect_ratio_ = ar;
+  }
+
+  void SetFovY(float fovY) noexcept
+  {
+    fovY_ = fovY;
+  }
+
+  void ResetMotion() noexcept
+  {
+    pan_offset_.MakeZero();
+    orbit_offset_.MakeZero();
+  }
 
   Matrix4x4f GetProjectionMatrix();
   Matrix4x4f GetViewMatrix();
@@ -76,8 +103,8 @@ class Camera {
   float fovY_;
   Vec3f up_;
 
-  Vec3f offset_from_target_;
-  Vec3f offset_from_position_;
+  Vec3f orbit_offset_;
+  Vec3f pan_offset_;
 };
 
 } // namespace kuro

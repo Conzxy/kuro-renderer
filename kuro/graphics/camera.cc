@@ -32,12 +32,12 @@ void Camera::Update(CameraContext &ctx)
 {
   Motion motion;
   if (ctx.is_orbiting) {
-    motion.orbit_offset = GetPosDelta(ctx.pressd_pos, ctx.orbit_end, ctx.width, ctx.height);
-    ctx.pressd_pos = ctx.orbit_end;
+    motion.orbit_offset = GetPosDelta(ctx.orbit_begin, ctx.orbit_end, ctx.width, ctx.height);
+    ctx.orbit_begin = ctx.orbit_end;
   }
   if (ctx.is_paning) {
-    motion.pan_offset = GetPosDelta(ctx.pressd_pos, ctx.pan_end, ctx.width, ctx.height);
-    ctx.pressd_pos = ctx.pan_end;
+    motion.pan_offset = GetPosDelta(ctx.pan_begin, ctx.pan_end, ctx.width, ctx.height);
+    ctx.pan_begin = ctx.pan_end;
   }
 
   motion.dolly = ctx.dolly_exp;
@@ -46,11 +46,12 @@ void Camera::Update(CameraContext &ctx)
   auto from_target = position_ - target_;
   auto from_camera = target_ - position_;
 
-  offset_from_position_ = CalcPanOffset(from_camera, motion);
-  offset_from_target_ = CalcOrbitOffset(from_target, motion);
-  target_ = target_ + offset_from_position_;
-  position_ = target_ + offset_from_target_;
+  pan_offset_ = CalcPanOffset(from_camera, motion);
+  orbit_offset_ = CalcOrbitOffset(from_target, motion);
+  target_ = target_ + pan_offset_;
+  position_ = target_ + orbit_offset_;
 }
+
 
 Vec3f Camera::CalcOrbitOffset(Vec3f from_target, Motion const &motion)
 {
@@ -76,11 +77,29 @@ Vec3f Camera::CalcOrbitOffset(Vec3f from_target, Motion const &motion)
   float phi = (float)std::acos(from_target.y() / r);
 
   auto factor = 2 * KURO_PI;
+
+  /*
+   * Mouse cursor move to right 
+   * == object right rotation 
+   * == camera left rotation
+   * == theta decrease
+   *
+   * Mouse cursor move to top(move to inside) 
+   * == rotate to inside(away from camera)
+   * == camara move to bottom
+   * == phi increase
+   */
   theta -= factor * motion.orbit_offset.x();
+
+  /*
+   * NOTICE 
+   * The origin of coordiante system of Qt
+   * in the left top corner of monitor
+   */
   phi -= factor * motion.orbit_offset.y();
   phi = Clamp<float>(phi, KURO_EPISION, KURO_PI-KURO_EPISION);
   r *= (float)std::pow(0.95, motion.dolly);
-
+  
   Vec3f offset;
   offset[0] = r * (float)sin(phi) * (float)sin(theta);
   offset[1] = r * (float)cos(phi);
@@ -93,7 +112,23 @@ Vec3f Camera::CalcPanOffset(Vec3f from_camera, Motion const &motion)
 {
   auto len = from_camera.len();
   auto z = from_camera / len;
+
+  /*
+   * mouse cursor move to left 
+   * == camera move to left 
+   * == object move to right
+   *
+   * mouse cursor move to top
+   * == camera move to top
+   * == object move to bottom
+   */
   auto nx = CrossProduct3(up_, z);
+
+  /*
+   * NOTICE
+   * cursor move to top ==> delta(pos.y) < 0.
+   * Hence, take the positive y-axis vector.
+   */
   auto y = CrossProduct3(z, nx);
   
   auto y_factor = 2 * (float)tan(fovY_ / 2) * len;
