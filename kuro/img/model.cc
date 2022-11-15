@@ -2,13 +2,20 @@
 
 #include <exception>
 
+#include "kuro/math/vec.hh"
 #include "kuro/util/file.hh"
+#include "kuro/util/log.hh"
 
 using namespace kuro;
 
-Model::Model() = default;
+Model::Model()
+{
+  ResetBoundingCoordinate();
+}
 
-Model::Model(char const *path) {
+Model::Model(char const *path) 
+  : Model()
+{
   if (!ParseFrom(path)) {
     // TODO Specific exception
     throw std::runtime_error{"Failed to parse *.obj file"};
@@ -200,7 +207,13 @@ bool Model::ParseVertex(std::string const &line)
     if (vertex[i] == 0.0 && end == numeric.c_str()) {
       return false;
     }
+
     cur_pos = line.find_first_not_of(' ', slash_pos+1);
+  }
+  
+  for (int i = 0; i < 3; ++i) {
+    max_bounding_coor_[i] = std::max(max_bounding_coor_[i], vertex[i]);
+    min_bounding_coor_[i] = std::min(min_bounding_coor_[i], vertex[i]);
   }
 
   vertexes_.emplace_back(vertex);
@@ -215,7 +228,7 @@ bool Model::ParseFace(std::string const &line)
   std::string::size_type slash_pos = std::string::npos;
   std::string mesh_slice;
   std::string numeric;
-  Face face; 
+  Face face;
 
   for (;;) {
     slash_pos = line.find(' ', cur_pos);
@@ -238,4 +251,33 @@ void Model::Clear()
   faces_.clear();
   textures_.clear();
   normals_.clear();
+}
+
+Matrix4x4f Model::GetModelMatrix() const noexcept
+{
+#if 1
+  DebugPrintf("max bounding = (%f, %f, %f)\n", max_bounding_coor_[0], max_bounding_coor_[1], max_bounding_coor_[2]);
+  DebugPrintf("min bounding = (%f, %f, %f)\n", min_bounding_coor_[0], min_bounding_coor_[1], min_bounding_coor_[2]);
+#endif
+  if (!has_model_matrix_cache_) {
+    auto scale = 2 / (max_bounding_coor_ - min_bounding_coor_);
+    auto tr = (max_bounding_coor_ + min_bounding_coor_) / -2;
+    
+    auto scale_uniform = std::max(scale.x(), std::max(scale.y(), scale.z()));
+
+    model_matrix_.SetData({
+      { scale_uniform, 0, 0, scale_uniform * tr.x() },
+      { 0, scale_uniform, 0, scale_uniform * tr.y() },
+      { 0, 0, scale_uniform, scale_uniform * tr.z() },
+      { 0, 0, 0, 1 }
+    });
+    has_model_matrix_cache_ = true;
+  }
+  return model_matrix_;
+}
+
+void Model::ResetBoundingCoordinate() noexcept
+{
+  max_bounding_coor_.Fill(-std::numeric_limits<float>::max());
+  min_bounding_coor_.Fill(std::numeric_limits<float>::max());
 }

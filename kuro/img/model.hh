@@ -3,8 +3,10 @@
 
 #include <vector>
 #include <string>
+#include <limits>
 
 #include "kuro/math/vec.hh"
+#include "kuro/math/matrix.hh"
 
 namespace kuro {
 
@@ -33,6 +35,7 @@ class Model {
   ~Model() noexcept;
   
   bool ParseFrom(char const *path);
+  void Clear();
 
   Vectexes &vertexes() noexcept { return vertexes_; }
   Faces &faces() noexcept { return faces_; }
@@ -49,7 +52,9 @@ class Model {
   Texture &GetTexture(size_t i) noexcept { return textures_[i]; }
   Normal &GetNormal(size_t i) noexcept { return normals_[i]; }
   
-  void Clear();
+  Matrix4x4f GetModelMatrix() const noexcept;
+
+  void ResetBoundingCoordinate() noexcept;
  private:
   bool ParseMesh(std::string const &mesh_slice, Face &face);
   bool ParseTexture(std::string const &line);
@@ -61,6 +66,12 @@ class Model {
   Faces faces_;
   Textures textures_;
   Normals normals_;
+  
+  Vec3f max_bounding_coor_;
+  Vec3f min_bounding_coor_;
+
+  mutable Matrix4x4f model_matrix_;
+  mutable bool has_model_matrix_cache_ = false;
 };
 
 } // namespace kuro

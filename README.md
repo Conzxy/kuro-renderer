@@ -10,6 +10,10 @@
 
 ## TODO
 * Handle wavefront obj file correctly
-  - [ ] | Vertex coordinate | > 1
+  - [x] process polygon 4 vertexes
+  - [x] | Vertex coordinate | > 1
+    * 通过Model Matrix调整模型的摆放
   - [ ] No normal or uv coordinate
   - [ ] Reference to MTL file
+- [ ] homogenenous clipping
+- [ ] perspective corrention interpolation
