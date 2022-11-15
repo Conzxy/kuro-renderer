@@ -43,6 +43,7 @@ class ShaderInterface : kanon::noncopyable {
   
   /**
    * \return
+   *  true -- choose the fragment
    *  false -- discard the fragment
    */
   virtual bool FragmentProcess(FragmentContext &fctx,

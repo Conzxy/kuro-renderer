@@ -27,10 +27,7 @@ class Matrix {
 
   Matrix(std::initializer_list<std::initializer_list<T>> data)
   {
-    for (size_t i = 0; i < R; ++i) {
-      for (size_t j = 0; j < C; ++j)
-        data_[i][j] = *((data.begin()+i)->begin()+j);
-    }
+    SetData(data);
   }
   
   template <typename = typename std::enable_if<
@@ -64,6 +61,14 @@ class Matrix {
       for (auto e : row)
         std::cout << e << ", ";
       std::cout << '\n';
+    }
+  }
+
+  void SetData(std::initializer_list<std::initializer_list<T>> data)
+  {
+    for (size_t i = 0; i < R; ++i) {
+      for (size_t j = 0; j < C; ++j)
+        data_[i][j] = *((data.begin()+i)->begin()+j);
     }
   }
  private:

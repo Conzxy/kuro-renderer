@@ -147,6 +147,5 @@ Matrix4x4f Camera::GetProjectionMatrix()
 
 Matrix4x4f Camera::GetViewMatrix()
 {
-  DebugPrintf("position: (%f, %f, %f)\n", position_[0], position_[1], position_[2]);
   return ::GetViewMatrix(target_, position_, up_);
 }

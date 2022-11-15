@@ -83,34 +83,30 @@ void DrawTriangle(std::array<FragmentContext, 3> const &fctxs,
   Vec3f bc_coor;
   Vec2f bbmin, bbmax;
   
-  Vec3f win_coor[3];
+  Vec3f world_coors[3];
   
   for (int i = 0; i < 3; ++i) {
-    win_coor[i] = fctxs[i].world_pos;
+    world_coors[i] = fctxs[i].world_pos;
   }
-  
+
   Vec3f ndc_coors[3];
   for (int i = 0; i < 3; ++i) {
+    DebugPrintf("World Coordinate = (%f, %f, %f)\n", world_coors[i][0], world_coors[i][1], world_coors[i][2]);
+    DebugPrintf("Clip Coordinate = (%f, %f, %f, %f)\n", fctxs[i].clip_pos[0], fctxs[i].clip_pos[1], fctxs[i].clip_pos[2], fctxs[i].clip_pos[3]);
     ndc_coors[i] = ClipVec<3>(fctxs[i].clip_pos/fctxs[i].clip_pos[3]);
-
+    
+    DebugPrintf("NDC Coordinate = (%f, %f, %f, %f)\n", ndc_coors[i][0], ndc_coors[i][1], ndc_coors[i][2]);
     if (std::fabs(ndc_coors[i][0]) > 1.0 || std::fabs(ndc_coors[i][1]) > 1.0)
       return;
   }
-
+  
   Vec2f screen_coor[3];
   float screen_depth[3];
 
   for (int i = 0; i < 3; ++i) {
-    // screen_coor[i][0] = WorldToScreenCoor(buffer.GetWidth(), win_coor[i][0]);
-    // screen_coor[i][1] = WorldToScreenCoor(buffer.GetHeight(), win_coor[i][1]);
     screen_coor[i][0] = (ndc_coors[i].x() + 1.0) * buffer.GetWidth() / 2;
     screen_coor[i][1] = (ndc_coors[i].y() + 1.0) * buffer.GetHeight() / 2;
-    // printf("screen coor = (%f, %f)\n", screen_coor[i][0], screen_coor[i][1]);
     screen_depth[i] = ndc_coors[i].z();
-    // FIXME z-test和light_dir是否必须这样调整？
-    // if (shader->uniform_light_dir.z() > 0) {
-    //   screen_depth[i] = -screen_depth[i];
-    // }
   }
   
   Vec2f clamp(buffer.GetWidth()-1, buffer.GetHeight()-1);
@@ -141,11 +137,11 @@ void DrawTriangle(std::array<FragmentContext, 3> const &fctxs,
 
       // 注意叉积方向
       auto face_normal =
-          CrossProduct3(win_coor[1] - win_coor[0], win_coor[2] - win_coor[0])
+          CrossProduct3(world_coors[1] - world_coors[0], world_coors[2] - world_coors[0])
               .Normalize();
 
       fctx.intensity =
-          DotProduct(face_normal, ToVecf(shader->uniform_light_dir));
+          DotProduct(face_normal, shader->uniform_light_dir);
 
       if (shader->FragmentProcess(fctx, color)) {
         buffer.UpdateDepth(p.x(), p.y(), interpolated_depth);

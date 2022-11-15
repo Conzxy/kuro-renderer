@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <stddef.h>
+#include <type_traits>
 
 #include "kuro/util/assert.hh"
 
@@ -70,6 +71,13 @@ namespace kuro {
   {                                                                            \
     for (size_t i = 0; i < d; ++i) {                                           \
       data_[i] = 0;                                                            \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  void Fill(T val) noexcept                                                    \
+  {                                                                            \
+    for (int i = 0; i < d; ++i) {                                              \
+      data_[i] = val;                                                          \
     }                                                                          \
   }
 
@@ -229,12 +237,26 @@ Vec<T, N> operator+(Vec<T, N> const &a, Vec<T, N> const &b) noexcept
   return Vec<T, N>(data);
 }
 
-template <typename T, size_t N>
-inline Vec<T, N> operator/(Vec<T, N> const &a, T d) noexcept
+template <
+    typename T, size_t N, typename U,
+    typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+inline Vec<T, N> operator/(Vec<T, N> const &a, U d) noexcept
 {
   Vec<T, N> ret;
   for (size_t i = 0; i < N; ++i) {
     ret[i] = a[i] / d;
+  }
+  return ret;
+}
+
+template <
+    typename T, size_t N, typename U,
+    typename = typename std::enable_if<std::is_convertible<U, T>::value>::type>
+inline Vec<T, N> operator/(U d, Vec<T, N> const &a) noexcept
+{
+  Vec<T, N> ret;
+  for (size_t i = 0; i < N; ++i) {
+    ret[i] = d / a[i];
   }
   return ret;
 }

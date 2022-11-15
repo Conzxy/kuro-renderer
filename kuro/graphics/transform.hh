@@ -1,10 +1,18 @@
 #ifndef KURO_GRAPHICS_TRANSFORM_H__
 #define KURO_GRAPHICS_TRANSFORM_H__
 
+#include <assert.h>
+
 #include "kuro/math/matrix.hh"
 
 namespace kuro {
 
+/** 
+ * **** Discard ****
+ *
+ * Reason: 
+ * Compared to multiple matrix to get the coordinate, multiple directly is better.
+ */
 inline Matrix4x4f GetViewportMatrix(float w, float h) noexcept
 {
   return {
@@ -12,6 +20,15 @@ inline Matrix4x4f GetViewportMatrix(float w, float h) noexcept
     { 0, h/2, 0, h/2 },
     { 0, 0, 0, 0 },
     { 0, 0, 0, 1 }
+  };
+}
+
+inline Vec3f GetViewPortCoordinate(Vec3f coor, float w, float h) noexcept
+{
+  return {
+    (coor.x() + 1) * w / 2,
+    (coor.y() + 1) * h / 2,
+    coor.z()
   };
 }
 
@@ -23,16 +40,14 @@ inline Matrix4x4f GetViewportMatrix(float w, float h) noexcept
  */
 inline Matrix4x4f GetProjectionMatrix(float near, float far, float fovY, float aspect_ratio) noexcept
 {
-  Matrix4x4f ret;
-  float y = -near * std::tan(fovY / 2);
-  float x = aspect_ratio * y;
-  ret[0] = { near / x, 0, 0, 0 };
-  ret[1] = { 0, near / y, 0, 0 };
-  ret[2] = { 0, 0, (near+far)/(near-far), -2*near*far/(near-far) };
-  ret[3] = { 0, 0, 1, 0 };
-
-  return ret;
-
+  assert(near < 0 && "Near plane must be in the -Z axis");
+  const auto tan_fovY = float(std::tan(fovY/2));
+  return {
+    { -1 / (aspect_ratio * tan_fovY), 0, 0, 0 },
+    { 0, -1 / tan_fovY, 0, 0 },
+    { 0, 0, (near+far)/(near-far), -2*near*far/(near-far) },
+    { 0, 0, 1, 0 }
+  };
 }
 
 inline Matrix4x4f GetViewMatrix(Vec3f target, Vec3f position, Vec3f up) noexcept
@@ -40,7 +55,8 @@ inline Matrix4x4f GetViewMatrix(Vec3f target, Vec3f position, Vec3f up) noexcept
   Vec3f z = (target - position).Normalize();
   Vec3f x = CrossProduct3(z, up).Normalize();
   Vec3f y = CrossProduct3(x, z).Normalize();
-  
+
+#if 0
   Matrix4x4f rotation ({
     { x.x(), x.y(), x.z(), 0 },
     { y.x(), y.y(), y.z(), 0 },
@@ -56,6 +72,19 @@ inline Matrix4x4f GetViewMatrix(Vec3f target, Vec3f position, Vec3f up) noexcept
   });
 
   return rotation * translation;
+#else
+  Vec3f row1{ x.x(), x.y(), x.z() };
+  Vec3f row2{ y.x(), y.y(), y.z() };
+  Vec3f row3{ -z.x(), -z.y(), -z.z() };
+  Vec3f col4{ -position.x(), -position.y(), -position.z() };
+
+  return {
+    { x.x(), x.y(), x.z(), DotProduct(row1, col4) },
+    { y.x(), y.y(), y.z(), DotProduct(row2, col4) },
+    { -z.x(), -z.y(), -z.z(), DotProduct(row3, col4) },
+    { 0, 0, 0, 1 }
+  };
+#endif
 }
 
 } // namespace kuro
