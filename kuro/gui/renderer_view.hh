@@ -10,6 +10,7 @@
 
 #include "kuro/graphics/camera.hh"
 #include "kuro/img/frame_buffer.hh"
+#include "kuro/graphics/rasterizer.hh"
 
 namespace kuro {
 
@@ -56,11 +57,11 @@ class RendererView : public QGraphicsView {
   QElapsedTimer fps_time_;
 
   QImage image;
-
-  Model *model_ = nullptr;
-  ShaderInterface *shader = nullptr;
-  FrameBuffer frame_buffer;
   
+  Rasterizer renderer_;
+  
+  ShaderInterface *shader_;
+  FrameBuffer frame_buffer_;
   float frame_count_ = 0;
   FrameContext frame_context_;
   

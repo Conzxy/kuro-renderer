@@ -5,37 +5,36 @@
 #include <QTimer>
 #include <QWidget>
 #include <QDebug>
+#include <stdio.h>
 
-#include "graphics/camera.hh"
-#include "graphics/line.hh"
-#include "graphics/transform.hh"
-#include "graphics/triangle.hh"
-#include "img/frame_buffer.hh"
-#include "img/model.hh"
-#include "img/qimage_util.hh"
-
-#include "graphics/flat_shader.hh"
+#include "kuro/graphics/camera.hh"
+#include "kuro/graphics/line.hh"
+#include "kuro/graphics/transform.hh"
+#include "kuro/graphics/triangle.hh"
+#include "kuro/img/frame_buffer.hh"
+#include "kuro/img/model.hh"
+#include "kuro/img/qimage_util.hh"
+#include "kuro/graphics/flat_shader.hh"
 
 using namespace kuro;
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 1000
+#define HEIGHT 600
 
 static Vec2i QPointToVec(QPoint const &p)
 {
   return { p.x(), p.y() };
 }
 
-
 RendererView::RendererView()
   : scene_(new QGraphicsScene())
   , px_item_(new QGraphicsPixmapItem())
-  , shader(new FlatShader())
-  , frame_buffer(WIDTH, HEIGHT, FrameBuffer::IMAGE_TYPE_RGB)
+  , renderer_()
+  , frame_buffer_(WIDTH, HEIGHT, FrameBuffer::IMAGE_TYPE_RGB)
   , init_position_(0., 0., 1.)
   , init_target_(0., 0., 0.)
   , camera_(init_target_, init_position_,
-           frame_buffer.GetWidth() / (float)frame_buffer.GetHeight())
+           frame_buffer_.GetWidth() / (float)frame_buffer_.GetHeight())
 {
   scene_->addItem(px_item_);
   scene_->setBackgroundBrush(Qt::black);
@@ -43,6 +42,9 @@ RendererView::RendererView()
   // flip vertically
   scale(1, -1);
   setScene(scene_);
+  
+  shader_ = new FlatShader();
+  renderer_.SetShader(shader_);
 
   connect(&timer_, &QTimer::timeout, this, [this]() {
     Render();
@@ -52,7 +54,7 @@ RendererView::RendererView()
 RendererView::~RendererView() noexcept
 {
   delete scene_;
-  delete shader;
+  delete shader_;
   // The px_item_ ownership is transfered to scene_
 }
 
@@ -60,7 +62,7 @@ void RendererView::SetImage(QImage const &image) { px_item_->setPixmap(QPixmap::
 
 void RendererView::SetModel(Model &model)
 {
-  model_ = &model;
+  renderer_.SetModel(&model);
   ResetCamera();
 }
 
@@ -149,47 +151,20 @@ void RendererView::ResetCamera() noexcept
 
 void RendererView::Render()
 {
-
-  frame_buffer.ClearAllPixel();
-  frame_buffer.ClearDepth();
-
   camera_ctx_.height = height();
   camera_ctx_.width = width();
 
   camera_.Update(camera_ctx_);
-  shader->varying_projection_matrix = camera_.GetProjectionMatrix();
-  shader->varying_view_matrix = camera_.GetViewMatrix();
+  shader_->varying_projection_matrix = camera_.GetProjectionMatrix();
+  shader_->varying_view_matrix = camera_.GetViewMatrix();
+  shader_->varying_model_matrix = renderer_.GetModel()->GetModelMatrix();
 
-  shader->varying_viewport_matrix = GetViewportMatrix(frame_buffer.GetWidth(), frame_buffer.GetHeight());
-  shader->varying_model_matrix = GetIdentityF<4>();
+  shader_->uniform_light_dir = {0, 0, 1};
+  shader_->uniform_light_dir = ClipVec<3>(shader_->varying_view_matrix * EmbedVec<4, 3, float>(shader_->uniform_light_dir, 0));
 
-  shader->uniform_light_dir = {0, 0, 1};
-  shader->uniform_light_dir = ClipVec<3>(shader->varying_view_matrix * EmbedVec<4, 3, float>(shader->uniform_light_dir, 0));
+  renderer_.Render(frame_buffer_);
 
-  for (size_t i = 0; i < model_->GetFacesNum(); ++i) {
-    auto &face = model_->GetFace(i);
-    std::array<FragmentContext, 3> fctxs;
-    
-    DebugPrintf("face vertexes count = %zu\n", face.size());
-    if (face.size() < 3) break;
-    const auto last_vtx_idx_after = face.size() - 2;
-    for (size_t j = 0; j < last_vtx_idx_after; j++) {
-      for (int k = 0; k < 3; ++k) {
-        DebugPrintf("current vertex in face: %d\n", int(k+j));
-        auto &mesh = face[k + j];
-        VertexContext vctx{
-            .pos = model_->GetVertex(mesh.vertex_idx),
-            .normal = model_->GetNormal(mesh.normal_idx),
-            .uv = ClipVec<2>(model_->GetTexture(mesh.uv_idx)),
-        };
-        fctxs[k] = shader->VertexProcess(vctx);
-      }
-
-      DrawTriangle(fctxs, shader, frame_buffer);
-    }
-  }
-
-  image = FrameBufferToQImage(frame_buffer);
+  image = FrameBufferToQImage(frame_buffer_);
   px_item_->setPixmap(QPixmap::fromImage(image));
 
   if (frame_count_ == 0) {
