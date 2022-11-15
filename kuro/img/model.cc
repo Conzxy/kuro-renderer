@@ -263,7 +263,7 @@ Matrix4x4f Model::GetModelMatrix() const noexcept
     auto scale = 2 / (max_bounding_coor_ - min_bounding_coor_);
     auto tr = (max_bounding_coor_ + min_bounding_coor_) / -2;
     
-    auto scale_uniform = std::max(scale.x(), std::max(scale.y(), scale.z()));
+    auto scale_uniform = std::min(scale.x(), std::min(scale.y(), scale.z()));
 
     model_matrix_.SetData({
       { scale_uniform, 0, 0, scale_uniform * tr.x() },

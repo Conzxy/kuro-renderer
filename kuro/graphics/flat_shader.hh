@@ -21,7 +21,7 @@ class FlatShader : public ShaderInterface {
     // auto mvp = varying_view_matrix; 
     fctx.clip_pos = varying_model_matrix * EmbedVecf<4>(vctx.pos, 1);
     fctx.clip_pos = varying_view_matrix * fctx.clip_pos;
-    fctx.clip_pos[2] -= 4;
+    fctx.clip_pos[2] -= 1.1;
     fctx.clip_pos = varying_projection_matrix * fctx.clip_pos;
     
     fctx.uv = vctx.uv;
