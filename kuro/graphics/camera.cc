@@ -9,12 +9,19 @@
 
 using namespace kuro;
 
-static Vec2f GetPosDelta(Vec2i from, Vec2i to, int w, int h)
+inline static Vec2f GetPosDelta(Vec2i from, Vec2i to, int h) noexcept
 {
-  auto ret = ToVecf(to - from);
-  ret[0] /= w;
-  ret[1] /= h;
-  return ret;
+  /*
+   * The reason for why divide by h is that
+   * the x coordiante is scaled in height in fact.
+   *
+   * x' = 2n / (r - l) * width * x
+   *    = (2n / (aspect_ratio * (t - b))) * aspect_ratio * height * x
+   *    = 2n / (t-b) * x
+   *
+   * Other reason is that the speed in y-axis and x-axis should be same.
+   */
+  return ToVecf(to - from) / h;
 }
 
 Camera::Camera(Vec3f target, Vec3f position, float aspect_ratio)
@@ -32,11 +39,11 @@ void Camera::Update(CameraContext &ctx)
 {
   Motion motion;
   if (ctx.is_orbiting) {
-    motion.orbit_offset = GetPosDelta(ctx.orbit_begin, ctx.orbit_end, ctx.width, ctx.height);
+    motion.orbit_offset = GetPosDelta(ctx.orbit_begin, ctx.orbit_end, ctx.height);
     ctx.orbit_begin = ctx.orbit_end;
   }
   if (ctx.is_paning) {
-    motion.pan_offset = GetPosDelta(ctx.pan_begin, ctx.pan_end, ctx.width, ctx.height);
+    motion.pan_offset = GetPosDelta(ctx.pan_begin, ctx.pan_end, ctx.height);
     ctx.pan_begin = ctx.pan_end;
   }
 
