@@ -263,6 +263,23 @@ Matrix4x4f Model::GetModelMatrix() const noexcept
     auto scale = 2 / (max_bounding_coor_ - min_bounding_coor_);
     auto tr = (max_bounding_coor_ + min_bounding_coor_) / -2;
     
+    /*
+     * Scale uniform must!
+     * Otherwise, the image proportion is destroyed.
+     *
+     * The reason for why projection(perspective) don't destroy 
+     * proportion of image is that
+     *
+     * x' = 2n / (r-l) * width * x
+     *    = 2n / (aspect_ratio * (t-b)) * aspect_ratio * heiht * x
+     *    = 2n / (t-b) * height * x
+     *
+     * y' = 2n / (t-b) * height * y
+     *
+     * i.e. this is uniform scale also.
+     *
+     * To orthogonal projection, like this.
+     */
     auto scale_uniform = std::min(scale.x(), std::min(scale.y(), scale.z()));
 
     model_matrix_.SetData({
