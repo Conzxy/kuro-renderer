@@ -3,8 +3,12 @@
 
 #include <stdint.h>
 #include <vector>
+#include <assert.h>
+#include <string.h>
 
 namespace kuro {
+
+class FrameBuffer;
 
 // Force to align to 1
 #pragma pack(push, 1)
@@ -89,7 +93,12 @@ struct TgaColor {
     , a(_a)
   {
   }
-
+  
+  TgaColor(uint8_t const *data, int bpp)
+  {
+    assert(bpp <= 4);
+    memcpy(this, data, bpp);
+  }
   void Print() const noexcept;
 
   uint8_t b = 0;
@@ -105,6 +114,10 @@ struct TgaColor {
  */
 class TgaImage {
   // FIXME Shoule disable copy?
+
+  using Width = uint16_t;
+  using Height = uint16_t;
+ public:
 
   /**
    * Don't care color-mapped
@@ -122,11 +135,9 @@ class TgaImage {
     TOP_LEFT = 0x20,
     TOP_RIGHT = 0x30,
   };
-
-  using Width = uint16_t;
-  using Height = uint16_t;
-
- public:
+  
+  TgaImage();
+  TgaImage(uint8_t const *borrow_data, int w, int h, ImageType t= RGB);
   TgaImage(int w, int h, ImageType t = RGB);
   ~TgaImage() noexcept;
 
@@ -135,17 +146,22 @@ class TgaImage {
   /*--------------------------------------------------*/
 
   bool WriteTo(char const *path,
-               ImageOriginOrder order = ImageOriginOrder::BOTTOM_LEFT,
-               bool rle = false) noexcept;
-  bool ReadFrom(char const *path) noexcept;
+               bool rle = false,
+               ImageOriginOrder order = ImageOriginOrder::BOTTOM_LEFT) noexcept;
 
+  static bool
+  WriteFrameBufferTo(FrameBuffer const &buffer, char const *path,
+                     bool rle = false,
+                     ImageOriginOrder order = ImageOriginOrder::BOTTOM_LEFT) noexcept;
+
+  bool ReadFrom(char const *path) noexcept;
   /*--------------------------------------------------*/
   /* Pixel manipulation                               */
   /*--------------------------------------------------*/
 
   void SetPixel(int x, int y, TgaColor const &color) noexcept;
   TgaColor GetPixel(int x, int y) noexcept;
-  
+
   /*--------------------------------------------------*/
   /* Getter                                           */
   /*--------------------------------------------------*/
@@ -154,13 +170,21 @@ class TgaImage {
   int bits_per_pixel() const noexcept { return bytes_per_pixel() << 3; }
   int width() const noexcept { return width_; }
   int height() const noexcept { return height_; }
+  
+  void EnableDebug(bool debug) noexcept { enable_debug_ = debug; }
 
  private:
-  uint16_t width_;
-  uint16_t height_;
+  void PrintHeader(TgaHeader const &header);
 
-  ImageType image_type_;
+  void Unimplement(char const *msg) noexcept;
 
+  uint16_t width_ = 0;
+  uint16_t height_ = 0;
+
+  ImageType image_type_ = NO_IMAGE_DATA;
+  
+  bool enable_debug_ = false;
+  uint8_t const* borrow_image_data_ = nullptr;
   std::vector<uint8_t> image_data_; // FIXME Not optimal
 };
 
