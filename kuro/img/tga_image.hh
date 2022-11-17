@@ -59,6 +59,8 @@ struct TgaHeader {
    *               file to the screen.
    *               (Bit4: left-to-right, aka. ->)
    *               (Bit5: top-to-bottom, aka. down)
+   *               BUT 00 --> Left Bottom,
+   *               You should think this is the origin of image in the screen.
    */
   uint8_t image_descriptor = 0;
 };
@@ -113,10 +115,6 @@ struct TgaColor {
  * \see http://tfc.duke.free.fr/coding/tga_specs.pdf
  */
 class TgaImage {
-  // FIXME Shoule disable copy?
-
-  using Width = uint16_t;
-  using Height = uint16_t;
  public:
 
   /**
@@ -128,7 +126,10 @@ class TgaImage {
     RGB = 3,       // Red, Green, Blue channels
     RGBA = 4,      // Attribute(commonly, alpha channel)
   };
-
+  
+  /**
+   * The origin of image in screen
+   */
   enum ImageOriginOrder : uint8_t {
     BOTTOM_LEFT = 0x00,
     BOTTOM_RIGHT = 0x10,
@@ -139,6 +140,12 @@ class TgaImage {
   TgaImage();
   TgaImage(uint8_t const *borrow_data, int w, int h, ImageType t= RGB);
   TgaImage(int w, int h, ImageType t = RGB);
+
+  TgaImage(TgaImage const &) = default;
+  TgaImage(TgaImage &&) = default;
+  TgaImage& operator=(TgaImage const &) = default;
+  TgaImage& operator=(TgaImage &&) = default;
+
   ~TgaImage() noexcept;
 
   /*--------------------------------------------------*/
@@ -155,6 +162,7 @@ class TgaImage {
                      ImageOriginOrder order = ImageOriginOrder::BOTTOM_LEFT) noexcept;
 
   bool ReadFrom(char const *path) noexcept;
+
   /*--------------------------------------------------*/
   /* Pixel manipulation                               */
   /*--------------------------------------------------*/
@@ -185,7 +193,7 @@ class TgaImage {
   
   bool enable_debug_ = false;
   uint8_t const* borrow_image_data_ = nullptr;
-  std::vector<uint8_t> image_data_; // FIXME Not optimal
+  std::vector<uint8_t> image_data_; // TODO Not optimal
 };
 
 } // namespace kuro

@@ -15,4 +15,5 @@ TEST (tga_image_test, read_from)
   TgaImage image2;
   ASSERT_TRUE(image2.ReadFrom("rle_tga_image_test_read_from.tga"));
   EXPECT_TRUE(image2.WriteTo("tga_image_test_read_from2.tga"));
+  image2.WriteTo("tga_image_test_read_from_br.tga", false, TgaImage::BOTTOM_RIGHT);
 }
