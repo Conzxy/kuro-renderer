@@ -1,5 +1,9 @@
 #include "file.hh"
 
+#if defined(__linux__) || defined(__unix__)
+#include <sys/stat.h>
+#endif
+
 #include <assert.h>
 #include <stdexcept>
 #include <string.h>
@@ -35,7 +39,7 @@ File::File(std::string const& filename, int mode)
 
 File::~File() noexcept
 {
-  if (fp_ != NULL) {
+  if (fp_) {
     ::fclose(fp_);
   }
 }
@@ -149,4 +153,35 @@ int File::ReadLine(std::string& line, const bool need_newline)
   } while (n == (sizeof(buf) - 1));
 
   return 0;
+}
+
+size_t File::GetFileSize(char const *path) noexcept
+{
+#if defined(__linux__) || defined(__unix__)
+  struct stat stat_buffer;
+  auto ret = stat(path, &stat_buffer);
+  if (ret < 0) {
+    return -1;
+  }
+  return stat_buffer.st_size;
+#else
+  File file;
+  if (!file.Open(path)) {
+    return -1;
+  }
+
+  file.SeekEnd(0);
+  return file.GetCurrentPosition();
+#endif
+}
+
+size_t File::GetFileSize() const noexcept
+{
+  // TODO error handling
+  auto self = const_cast<File*>(this);
+  auto old_pos = self->GetCurrentPosition();
+  self->SeekEnd(0);
+  auto fsize = self->GetCurrentPosition();
+  self->SeekBegin(old_pos);
+  return fsize;
 }
