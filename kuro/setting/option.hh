@@ -2,11 +2,12 @@
 #define KURO_SETTINGS_OPTION_H__
 
 #include <string>
+#include <vector>
 
 namespace kuro {
 
 struct Option {
-  std::string model_name = "";
+  std::vector<std::string> models;
 };
 
 inline Option &kuro_option()

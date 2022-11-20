@@ -137,11 +137,11 @@ void DrawTriangle(std::array<FragmentContext, 3> const &fctxs,
 
       // 注意叉积方向
       auto face_normal =
-          CrossProduct3(world_coors[1] - world_coors[0], world_coors[2] - world_coors[0])
+          -CrossProduct3(world_coors[1] - world_coors[0], world_coors[2] - world_coors[0])
               .Normalize();
 
       fctx.intensity =
-          DotProduct(face_normal, shader->uniform_light_dir);
+          std::max(0.f, DotProduct(face_normal, shader->uniform_light_dir));
 
       if (shader->FragmentProcess(fctx, color)) {
         buffer.UpdateDepth(p.x(), p.y(), interpolated_depth);

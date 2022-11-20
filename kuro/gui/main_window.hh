@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <unordered_map>
 
 #include "kuro/img/model.hh"
 #include "renderer_view.hh"
@@ -28,7 +29,6 @@ class MainWindow : public QMainWindow {
 
   QTimer title_timer_;
 
-  Model model_;
 
   RendererView *renderer_view_;
 };

@@ -32,8 +32,6 @@ class FlatShader : public ShaderInterface {
 
   bool FragmentProcess(FragmentContext &fctx, FrameColor &color) override
   {
-    if (fctx.intensity < 0) return false;
-
     color.r = fctx.intensity * 255;
     color.g = fctx.intensity * 255;
     color.b = fctx.intensity * 255;

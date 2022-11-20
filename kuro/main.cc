@@ -29,7 +29,7 @@ int main(int argc, char **argv)
       "");
   
   auto &opt = kuro_option();
-  takina::AddOption({"m", "model", "Wavefront object file", "MODEL FILE"}, &opt.model_name);
+  takina::AddOption({"m", "model", "Wavefront object files", "MODEL FILES"}, &opt.models);
   
   std::string errmsg;
   if (!takina::Parse(argc, argv, &errmsg)) {

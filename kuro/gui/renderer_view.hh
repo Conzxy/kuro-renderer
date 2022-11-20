@@ -7,9 +7,11 @@
 #include <QTime>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <unordered_map>
 
-#include "kuro/graphics/camera.hh"
+#include "kuro/img/object.hh"
 #include "kuro/img/frame_buffer.hh"
+#include "kuro/graphics/camera.hh"
 #include "kuro/graphics/rasterizer.hh"
 
 namespace kuro {
@@ -30,6 +32,8 @@ class RendererView : public QGraphicsView {
   
   void SetImage(QImage const &image);
   void SetModel(Model &model);
+
+  void AddModel(char const *path);
 
   void StartRender();
   void StopRender();
@@ -58,7 +62,7 @@ class RendererView : public QGraphicsView {
 
   QImage image;
   
-  Rasterizer renderer_;
+  std::unordered_map<std::string, Model> models_;
   
   ShaderInterface *shader_;
   FrameBuffer frame_buffer_;

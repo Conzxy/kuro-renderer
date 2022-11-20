@@ -89,7 +89,11 @@ class Camera {
 
   Matrix4x4f GetProjectionMatrix();
   Matrix4x4f GetViewMatrix();
+  
+  Vec3f position() const noexcept { return position_; }
+  Vec3f target() const noexcept { return target_; }
 
+  float GetRadius() const noexcept { return (position_ - target_).len(); }
  private:
   Vec3f CalcOrbitOffset(Vec3f from_target, Motion const &motion);
   Vec3f CalcPanOffset(Vec3f from_camera, Motion const &motion);

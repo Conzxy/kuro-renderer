@@ -39,9 +39,8 @@ void MainWindow::CreateActions()
         tr("Wavefront model file(*.obj)"));
   
     if (model_name.isEmpty()) return;
-
-    model_.Clear();
-    model_.ParseFrom(QStringToCString(model_name));
+    
+    renderer_view_->AddModel(QStringToCString(model_name));
   });
 }
 
@@ -54,16 +53,14 @@ void MainWindow::CreateMenus()
 void MainWindow::Start()
 {
   auto &opt = kuro_option();
-
-  if (!opt.model_name.empty()) {
-    if (!model_.ParseFrom(opt.model_name.c_str())) {
-      fprintf(stderr, "Failed to parse obj file: %s\n", opt.model_name.c_str());
-      exit(0);
+  
+  for (auto const &model : opt.models) {
+    if (!model.empty()) {
+      renderer_view_->AddModel(model.c_str());
     }
 
-    renderer_view_->SetModel(model_);
-    renderer_view_->StartRender();
   }
   
+  renderer_view_->StartRender();
   show();
 }

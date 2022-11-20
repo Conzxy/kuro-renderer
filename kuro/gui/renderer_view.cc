@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <stdio.h>
 
+#include "kuro/img/tga_image.hh"
 #include "kuro/graphics/camera.hh"
 #include "kuro/graphics/line.hh"
 #include "kuro/graphics/transform.hh"
@@ -29,7 +30,6 @@ static Vec2i QPointToVec(QPoint const &p)
 RendererView::RendererView()
   : scene_(new QGraphicsScene())
   , px_item_(new QGraphicsPixmapItem())
-  , renderer_()
   , frame_buffer_(WIDTH, HEIGHT, FrameBuffer::IMAGE_TYPE_RGB)
   , init_position_(0., 0., 1.)
   , init_target_(0., 0., 0.)
@@ -44,7 +44,6 @@ RendererView::RendererView()
   setScene(scene_);
   
   shader_ = new FlatShader();
-  renderer_.SetShader(shader_);
 
   connect(&timer_, &QTimer::timeout, this, [this]() {
     Render();
@@ -62,8 +61,18 @@ void RendererView::SetImage(QImage const &image) { px_item_->setPixmap(QPixmap::
 
 void RendererView::SetModel(Model &model)
 {
-  renderer_.SetModel(&model);
-  ResetCamera();
+  throw -1;
+}
+
+void RendererView::AddModel(char const *path)
+{
+  Model model;
+  if (!model.ParseFrom(path)) {
+    // TODO Error handling
+    return;
+  }
+
+  models_.emplace(path, std::move(model));
 }
 
 void RendererView::StartRender()
@@ -157,12 +166,53 @@ void RendererView::Render()
   camera_.Update(camera_ctx_);
   shader_->varying_projection_matrix = camera_.GetProjectionMatrix();
   shader_->varying_view_matrix = camera_.GetViewMatrix();
-  shader_->varying_model_matrix = renderer_.GetModel()->GetModelMatrix();
+  // shader_->varying_model_matrix = renderer_.GetModel()->GetModelMatrix();
+  shader_->varying_model_matrix = GetIdentityF<4>();
 
   shader_->uniform_light_dir = {0, 0, 1};
-  shader_->uniform_light_dir = ClipVec<3>(shader_->varying_view_matrix * EmbedVec<4, 3, float>(shader_->uniform_light_dir, 0));
+  
+  auto &frame_buffer = frame_buffer_;
 
-  renderer_.Render(frame_buffer_);
+  frame_buffer.ClearAllPixel();
+  frame_buffer.ClearDepth();
+   
+  for (auto const &name_model : models_) {
+    auto const model = &name_model.second;
+    for (size_t i = 0; i < model->GetFacesNum(); ++i) {
+      auto &face = model->GetFace(i);
+      std::array<FragmentContext, 3> fctxs;
+      const auto polygon_vertex_num = face.size();
+      if (polygon_vertex_num < 3 || polygon_vertex_num > 4) {
+        fprintf(stderr, "Can't process polygon whose vertexes num less than 3 or "
+                        "greater than 4");
+        return;
+      }
+
+      int tri_vtxes[3] = {0, 1, 2};
+
+      int tri_num = 1;
+      if (polygon_vertex_num == 4) tri_num++;
+      for (; tri_num > 0; --tri_num) {
+        for (int i = 0; i < 3; ++i) {
+          auto &mesh = face[tri_vtxes[i]];
+          VertexContext vctx{
+              .pos = model->GetVertex(mesh.vertex_idx),
+              .normal = model->GetNormal(mesh.normal_idx),
+              .uv = ClipVec<2>(model->GetTexture(mesh.uv_idx)),
+          };
+          fctxs[i] = shader_->VertexProcess(vctx);
+        }
+
+        DrawTriangle(fctxs, shader_, frame_buffer);
+
+        if (polygon_vertex_num == 4) {
+          tri_vtxes[0] = 2;
+          tri_vtxes[1] = 3;
+          tri_vtxes[2] = 0;
+        }
+      }
+    }
+  }
 
   image = FrameBufferToQImage(frame_buffer_);
   px_item_->setPixmap(QPixmap::fromImage(image));

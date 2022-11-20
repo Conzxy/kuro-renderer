@@ -48,9 +48,13 @@ class Model {
   size_t GetNormalsNum() const noexcept { return normals_.size(); }
 
   Vertex &GetVertex(size_t i) noexcept { return vertexes_[i]; }
+  Vertex const &GetVertex(size_t i) const noexcept { return vertexes_[i]; }
   Face &GetFace(size_t i) noexcept { return faces_[i]; }
+  Face const &GetFace(size_t i) const noexcept { return faces_[i]; }
   Texture &GetTexture(size_t i) noexcept { return textures_[i]; }
+  Texture const &GetTexture(size_t i) const noexcept { return textures_[i]; }
   Normal &GetNormal(size_t i) noexcept { return normals_[i]; }
+  Normal const &GetNormal(size_t i) const noexcept { return normals_[i]; }
   
   Matrix4x4f GetModelMatrix() const noexcept;
 

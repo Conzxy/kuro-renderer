@@ -3,6 +3,8 @@
 
 #include <utility>
 
+#include "kuro/math/vec.hh"
+
 namespace kuro {
 
 class TgaImage;
@@ -30,6 +32,10 @@ void DrawLine2(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_b
 void DrawLine3(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_buffer);
 
 void DrawLine(Point2D p0, Point2D p1, FrameColor const &c, FrameBuffer &frame_buffer);
+inline void DrawLine(Vec2i p0, Vec2i p1, FrameColor const &c, FrameBuffer &frame_buffer)
+{
+  DrawLine(Point2D{ p0[0], p0[1] }, Point2D{ p1[0], p1[1] }, c, frame_buffer);
+}
 
 } // namespace kuro
 
